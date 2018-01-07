@@ -1,0 +1,8 @@
+django
+djangorestframework
+markdown
+django-filter
+django-cors-headers
+django-rest-swagger
+django-rest-framework-docs
+django-rest-auth
