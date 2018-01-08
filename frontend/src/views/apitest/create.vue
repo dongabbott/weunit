@@ -9,7 +9,7 @@
           <div class="component-item" style="height:autosize;">
             <el-form :model="postForm" :rules="caseRules">
               <el-form-item label-width="120px" label="项目名称:" style="width:500px;">
-                <el-select v-model="postForm.projects" placeholder="请选择活动区域">
+                <el-select @visible-change="selectChange" v-model="postForm.project_id" placeholder="请选择项目" >
                   <el-option v-for="item in projectSelect" :label="item.name" :value="item.key">
                   </el-option>
                 </el-select>
@@ -187,6 +187,9 @@ export default {
         console.log(this.projectSelect)
       })
     }
+  },
+  selectChange(val) {
+    console.log(val)
   }
 }
 </script>
