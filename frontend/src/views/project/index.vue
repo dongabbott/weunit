@@ -60,14 +60,14 @@
     </div>
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form :rules="rules" ref="dataForm" :model="temp" label-position="left" label-width="70px" style='width: 400px; margin-left:50px;'>
-        <el-form-item label="项目名称">
+      <el-form :rules="rules" ref="dataForm" :model="temp" label-position="left" label-width="70px" style='width: 600px; margin-left:50px;'>
+        <el-form-item label-width="120px" label="项目名称" prop="project_name">
           <el-input v-model="temp.project_name"></el-input>
         </el-form-item>
-        <el-form-item label="项目描述">
+        <el-form-item  label-width="120px" label="项目描述">
           <el-input type="textarea" v-model="temp.project_desc"></el-input>
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label-width="120px" label="状态">
           <el-switch
             v-model="temp.project_status"
             active-color="#13ce66"
@@ -76,10 +76,10 @@
             inactive-text="禁用">
           </el-switch>
         </el-form-item>
-        <el-form-item label="项目简称">
+        <el-form-item label-width="120px" label="项目简称" prop="project_title">
           <el-input v-model="temp.project_title"></el-input>
         </el-form-item>
-        <el-form-item label="根目录">
+        <el-form-item label-width="120px" label="根目录">
           <el-input v-model="temp.project_root"></el-input>
         </el-form-item>
       </el-form>
@@ -90,19 +90,32 @@
       </div>
     </el-dialog>
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogSetting">
-      <el-form :rules="rules" ref="dataForm" :model="temp" label-position="left" label-width="70px" style='width: 400px; margin-left:50px;'>
-        <el-form-item label-width="120px" label="默认请求头:" style="width:500px;">
-            <el-input type="textarea" :rows="3" placeholder="输入默认的http请求头" v-model="temp.setting.headers"></el-input>
-        </el-form-item>
-        <el-form-item label-width="120px" label="默认请求参数:" style="width:500px;">
-            <el-input type="textarea" :rows="3" placeholder="请输入默认的请求参数" v-model="temp.setting.params"></el-input>
-        </el-form-item>
-        <el-form-item label-width="120px" label="测试数据库地址:" style="width:500px;">
-            <el-input placeholder="输入请求地址" v-model="temp.setting.db_connect"></el-input>
-        </el-form-item>
-        <el-form-item label-width="120px" label="服务器地址:" style="width:500px;">
-            <el-input placeholder="输入请求地址" v-model="temp.setting.address"></el-input>
-        </el-form-item>
+      <el-form :rules="rules" ref="dataForm" :model="temp" label-position="left" label-width="70px" style='width: 800px; margin-left:50px;'>
+        <table>
+          <thead>
+            <tr>
+              <td>配置项</td>
+              <td>配置值</td>
+              <td>配置描述</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in temp.setting">
+              <td>
+                <el-select v-model="row.setting_type" placeholder="选择配置项" :disabled="true">
+                  <el-option v-for="item in settingTypeSelect" :label="item.name" :value="item.key">
+                  </el-option>
+                </el-select>
+              </td>
+              <td>
+                <el-input v-model="row.setting_value" style="width:300px;"></el-input>
+              </td>
+              <td>
+                <el-input v-model="row.setting_desc"></el-input>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogSetting = false">取 消</el-button>
@@ -135,6 +148,7 @@ export default {
         project_status: true,
         limit: 20
       },
+      settingTypeSelect: '',
       selectGroupKeyValue: null,
       sortOptions: [{ label: '按ID升序列', key: '+id' }, { label: '按ID降序', key: '-id' }],
       statusOptions: ['published', 'draft', 'deleted'],
@@ -146,12 +160,7 @@ export default {
         project_title: '',
         project_root: '',
         project_status: true,
-        setting: {
-          headers: '',
-          params: '',
-          db_connect: '',
-          address: ''
-        }
+        setting: []
       },
       dialogFormVisible: false,
       dialogSetting: false,
@@ -163,8 +172,8 @@ export default {
       },
       dialogPvVisible: false,
       rules: {
-        project_name: [{ type: 'date', required: true, message: 'timestamp is required', trigger: 'change' }],
-        project_desc: [{ required: true, message: 'title is required', trigger: 'blur' }]
+        project_name: [{ required: true, message: '项目名称必须填', trigger: 'blur' }],
+        project_title: [{ required: true, message: '项目简称必须填', trigger: 'blur' }]
       }
     }
   },
@@ -187,6 +196,7 @@ export default {
       projectList(this.listQuery).then(response => {
         this.list = response.data.data
         this.total = response.data.count
+        this.settingTypeSelect = response.data.setting_type
         this.listLoading = false
       })
     },
@@ -199,9 +209,16 @@ export default {
       })
     },
     createPorject() {
-      projectAdd(this.temp).then(response => {
-        if (response.data) {
-          this.$router.go(0)
+      this.$refs.dataForm.validate(valid => {
+        if (valid) {
+          projectAdd(this.temp).then(response => {
+            if (response.data) {
+              this.$router.go(0)
+            }
+          })
+        } else {
+          console.log('error submit!!')
+          return false
         }
       })
     },
@@ -228,8 +245,15 @@ export default {
       this.dialogStatus = 'setting'
       this.dialogSetting = true
       this.temp = Object.assign({}, row) // copy obj
-      this.dialogStatus = 'update'
-      this.dialogFormVisible = true
+      if (this.temp.setting.length === 0) {
+        this.settingTypeSelect.map(v => {
+          this.temp.setting.push({
+            setting_type: v.key,
+            setting_value: '',
+            setting_desc: ''
+          })
+        })
+      }
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
       })
@@ -254,12 +278,7 @@ export default {
         project_title: '',
         project_root: '',
         project_status: true,
-        setting: {
-          headers: '',
-          params: '',
-          db_connect: '',
-          address: ''
-        }
+        setting: ''
       }
     },
     handleCreate() {
