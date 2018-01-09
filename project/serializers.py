@@ -1,6 +1,6 @@
 # -*-coding:utf-8 -*-
 
-from .models import Projects, Settings, Tasks, SETTING_CLASS
+from .models import Projects, Settings, Tasks
 from rest_framework import serializers
 import random, string, datetime
 from django.conf import settings
