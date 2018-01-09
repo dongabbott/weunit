@@ -2,7 +2,11 @@
 from __future__ import unicode_literals
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.response import Response
+<<<<<<< HEAD
 from .models import Projects, Settings, Tasks, SETTING_CLASS
+=======
+from .models import Projects, Settings, Tasks
+>>>>>>> b78ac6aaf3e44afdecffbf5c2a223debce6b3ea4
 from .serializers import ProjectSerializer, SettingSerializer, TaskSerializer
 from rest_framework.views import APIView
 from rest_framework import status
@@ -33,9 +37,13 @@ class ProjectList(APIView):
     def get(self, request, format=None):
         projects = Projects.objects.all()
         serializer = ProjectSerializer(projects, many=True)
+<<<<<<< HEAD
 
         data = {"count": Projects.objects.count(),
                 "setting_type": [{"key":key , "name": name} for (key, name) in SETTING_CLASS],
+=======
+        data = {"count": Projects.objects.count(),
+>>>>>>> b78ac6aaf3e44afdecffbf5c2a223debce6b3ea4
                 "data": serializer.data
                 }
         return Response(data, status=status.HTTP_200_OK)

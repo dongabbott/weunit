@@ -16640,6 +16640,7 @@ Traceback (most recent call last):
   File "C:\Python27\lib\json\decoder.py", line 364, in decode
     obj, end = self.raw_decode(s, idx=_w(s, 0).end())
 TypeError: expected string or buffer
+<<<<<<< HEAD
 2018-01-08 10:46:40,641 [base:get_response] [WARNING]- Not Found: /transaction/list
 2018-01-08 10:47:02,463 [base:get_response] [WARNING]- Not Found: /transaction/list
 2018-01-08 10:47:33,825 [exception:handle_uncaught_exception] [ERROR]- Internal Server Error: /api/project/
@@ -18164,3 +18165,5 @@ Traceback (most recent call last):
   File "C:\Python27\lib\site-packages\django\db\models\sql\compiler.py", line 886, in execute_sql
     raise original_exception
 IntegrityError: (1062, "Duplicate entry '13' for key 'PRIMARY'")
+=======
+>>>>>>> b78ac6aaf3e44afdecffbf5c2a223debce6b3ea4
