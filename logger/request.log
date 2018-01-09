@@ -16640,3 +16640,4 @@ Traceback (most recent call last):
   File "C:\Python27\lib\json\decoder.py", line 364, in decode
     obj, end = self.raw_decode(s, idx=_w(s, 0).end())
 TypeError: expected string or buffer
+2018-01-09 10:50:22,128 [base:get_response] [WARNING]- Not Found: /transaction/list
