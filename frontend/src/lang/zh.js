@@ -5,6 +5,8 @@ export default {
     groups: '用户组',
     project: '项目管理',
     apitest: '接口测试',
+    apitestList: '测试用例管理',
+    apitestUser: '测试用户管理',
     introduction: '简述',
     documentation: '文档',
     permission: '权限测试页',

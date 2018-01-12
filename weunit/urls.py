@@ -22,6 +22,7 @@ from rest_framework.schemas import get_schema_view
 from rest_framework_swagger.renderers import SwaggerUIRenderer, OpenAPIRenderer
 from account import views as account_view
 from project import views as project_view
+from backend import views as apitest_view
 
 
 # Routers provide an easy way of automatically determining the URL conf.
@@ -44,4 +45,7 @@ urlpatterns = [
     url(r'^api/project/(?P<pk>[0-9]+)/$', project_view.ProjectDetail.as_view()),
     url(r'^api/project/setting/(?P<pk>[0-9]+)/$', project_view.SettingDetail.as_view()),
     url(r'^api/project/ready/$', project_view.xunit_init),
+    url(r'^api/apitest/users/$', apitest_view.apiTokenUserList.as_view()),
+    url(r'^api/apitest/users/(?P<pk>[0-9]+)/$', apitest_view.apiTokenUserDetail.as_view()),
+    url(r'^api/apitest/case/$', apitest_view.apiTestCaseList.as_view()),
 ]

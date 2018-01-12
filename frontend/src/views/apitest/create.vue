@@ -9,8 +9,15 @@
           <div class="component-item" style="height:autosize;">
             <el-form :model="postForm" :rules="caseRules">
               <el-form-item label-width="120px" label="项目名称:" style="width:500px;">
-                <el-select @visible-change="selectChange" v-model="postForm.project_id" placeholder="请选择项目" >
-                  <el-option v-for="item in projectSelect" :label="item.name" :value="item.key">
+                <el-select
+                @change="getProjectSetting"
+                v-model="postForm.project_id"
+                placeholder="请选择项目"
+                value-key="id">
+                  <el-option v-for="(item, index)  in projectSelect"
+                  :label="item.project_name"
+                  :value="index"
+                  :key="item.id">
                   </el-option>
                 </el-select>
               </el-form-item>
@@ -22,10 +29,15 @@
                 </el-col>
                 <el-col :span="3">
                 <el-form-item>
-                  <multiselect v-model="postForm.method" :options="reqeustMethod" @search-change="getProjectList" placeholder="" selectLabel="选择"
-                    deselectLabel="删除" track-by="name" :internalSearch="false" label="name">
-                    <span slot='noResult'>无结果</span>
-                  </multiselect>
+                  <el-select
+                  v-model="postForm.method"
+                  placeholder="请求方式">
+                    <el-option v-for="(item, index)  in reqeustMethod"
+                    :label="item.name"
+                    :value="item.key"
+                    :key="item.id">
+                    </el-option>
+                  </el-select>
                 </el-form-item>
                 </el-col>
               </el-row>
@@ -41,18 +53,28 @@
                 <el-col :span="9">
                   <el-form-item label-width="120px" label="是否登录:">
                     <el-switch
-                      v-model="postForm.is_login"
+                      v-model="postForm.is_token"
                       active-color="#13ce66"
                       inactive-color="#ff4949">
                     </el-switch>
                   </el-form-item>
                 </el-col>
-                <el-col :span="8" v-if="postForm.is_login===true" v-show="true">
+                <el-col :span="8" v-if="postForm.is_token===true" v-show="true">
                   <el-form-item label-width="120px" label="登录用户:">
-                    <multiselect v-model="postForm.user" :options="userLIstOptions" @search-change="getProjectList" placeholder="" selectLabel="选择"
-                      deselectLabel="删除" track-by="name" :internalSearch="false" label="name">
-                      <span slot='noResult'>无结果</span>
-                    </multiselect>
+                    <el-select
+                     v-model="postForm.token_user"
+                     filterable
+                     remote
+                     reserve-keyword
+                     placeholder="用户关键词"
+                     :remote-method="getRemoteUserList">
+                     <el-option
+                       v-for="item in userLIstOptions"
+                       :key="item.key"
+                       :label="item.name"
+                       :value="item.key">
+                     </el-option>
+                   </el-select>
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -88,7 +110,7 @@
                 </el-col>
               </el-row>
               <el-form-item label-width="700px">
-                <el-button type="primary">立即创建</el-button>
+                <el-button type="primary" @click="createApiTestCase">立即创建</el-button>
                 <el-button>取消</el-button>
               </el-form-item>
             </el-form>
@@ -121,6 +143,7 @@ import waves from '@/directive/waves/index.js' // 水波纹指令
 import Tinymce from '@/components/Tinymce'
 import Upload from '@/components/Upload/singleImage3'
 import Multiselect from 'vue-multiselect'
+import { apiTokenUserSearch, testCaseAdd } from '@/api/apitest'
 import { projectList } from '@/api/project'
 
 const defaultForm = {
@@ -130,11 +153,12 @@ const defaultForm = {
   method: '',
   uri: '',
   headers: '',
-  is_login: false,
-  login_user: '',
+  params: '',
+  is_token: false,
+  token_user: '',
   c_after: '',
   c_before: '',
-  project_id: '',
+  project_id: null,
   description: ''
 }
 export default {
@@ -165,12 +189,9 @@ export default {
         { key: 4, name: 'DELETE' }
       ],
       projectSelect: '',
+      userLIstOptions: [],
       listQuery: {
-        page: 1,
-        project_name: null,
-        project_desc: null,
-        project_status: true,
-        limit: 20
+        search: ''
       },
       caseRules: {
         uri: [{ required: true }]
@@ -178,18 +199,42 @@ export default {
     }
   },
   methods: {
+    getProjectSetting: function(index, key) {
+      const apiSttings = this.projectSelect[index]
+      apiSttings.setting.map(v => {
+        if (v.setting_type === 0) {
+          this.postForm.uri = v.setting_value
+        } else if (v.setting_type === 1) {
+          this.postForm.headers = v.setting_value
+        } else if (v.setting_type === 2) {
+          this.postForm.params = v.setting_value
+        }
+      })
+    },
     getProjectList() {
       projectList(this.listQuery).then(response => {
         if (!response.data) return
-        this.projectSelect = response.data.data.map(v => ({
-          key: v.project_name
-        }))
+        this.projectSelect = response.data.data
         console.log(this.projectSelect)
       })
+    },
+    getRemoteUserList(search) {
+      apiTokenUserSearch(search).then(response => {
+        if (!response.data.results) return
+        console.log(response)
+        this.userLIstOptions = response.data.results.map(v => ({
+          key: v.id,
+          name: v.username
+        }))
+      })
+    },
+    createApiTestCase() {
+      testCaseAdd(this.postForm).then(response => {
+        if (response.data) {
+          this.$router.go(0)
+        }
+      })
     }
-  },
-  selectChange(val) {
-    console.log(val)
   }
 }
 </script>

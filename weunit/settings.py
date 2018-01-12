@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_framework_docs',
     'rest_auth',
-    'project'
+    'project',
+    'backend'
     # 'webpack_loader',
 ]
 

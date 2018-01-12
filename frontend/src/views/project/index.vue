@@ -1,9 +1,6 @@
 <template>
   <div class="app-container calendar-list-container">
     <div class="filter-container">
-      <el-input @keyup.enter.native="handleFilter" style="width: 200px;" class="filter-item" placeholder="项目名" v-model="listQuery.project_name">
-      </el-input>
-      <el-button class="filter-item" type="primary" v-waves icon="el-icon-search" @click="handleFilter">搜索</el-button>
       <el-button class="filter-item" style="margin-left: 10px;" @click="handleCreate" type="primary" icon="el-icon-edit">添加</el-button>
       <el-button class="filter-item" type="primary" v-waves icon="el-icon-download" @click="handleDownload">导出</el-button>
     </div>
@@ -54,8 +51,8 @@
     </el-table>
 
     <div v-show="!listLoading" class="pagination-container">
-      <el-pagination background @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page.sync="listQuery.page"
-        :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit" layout="total, sizes, prev, pager, next, jumper" :total="total">
+      <el-pagination background @current-change="handleCurrentChange" :current-page.sync="listQuery.page"
+        :page-sizes="[20]" :page-size="20" layout="total, sizes, prev, pager, next, jumper" :total="total">
       </el-pagination>
     </div>
 
@@ -142,11 +139,7 @@ export default {
       total: null,
       listLoading: true,
       listQuery: {
-        page: 1,
-        project_name: null,
-        project_desc: null,
-        project_status: true,
-        limit: 20
+        page: 1
       },
       settingTypeSelect: '',
       selectGroupKeyValue: null,

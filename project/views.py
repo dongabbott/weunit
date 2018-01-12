@@ -11,24 +11,13 @@ from rest_framework import permissions
 from rest_framework.decorators import api_view
 from rest_framework.decorators import permission_classes, authentication_classes
 import django_filters.rest_framework
+from rest_framework.pagination import PageNumberPagination
 
 
 class ProjectList(APIView):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = [TokenAuthentication, SessionAuthentication]
-    filter_backends = (django_filters.rest_framework.DjangoFilterBackend,)
-    filter_fields = ('project_name',)
-
-    """
-    def filter_request(self, request):
-        settings = request.data.get('setting')
-        if settings:
-            for s in settings:
-                if s['setting_type'] == '' and s['value'] == '':
-                    settings.remove(s)
-        request.data['setting'] = settings
-        return request.data
-    """
+    pagination_class = PageNumberPagination
 
     def get(self, request, format=None):
         projects = Projects.objects.all()
@@ -41,7 +30,6 @@ class ProjectList(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request, format=None):
-        print '111111111', request.data
         serializer = ProjectSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user_id=request.user.id)
