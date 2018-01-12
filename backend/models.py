@@ -42,7 +42,7 @@ class ApiTestCases(models.Model):
                       "Accept": "application/vnd.timehut.v5+json",
                       "User-Agent": "com.liveyap.timehut/5.1.1.2 (android 7.1.1, OD105) (SOURCE/aliyun, VERSION_CODE/227)"
                       }
-    token_user = models.ForeignKey(ApiTokenUser, related_name="token_user", blank=True)
+    token_user = models.ForeignKey(ApiTokenUser, related_name="token_user", null=True)
     params = models.CharField(u"请求体", max_length=500)
     headers = models.CharField(u"请求头", max_length=500)
     project = models.ForeignKey(Projects, related_name="project", null=True)

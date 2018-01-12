@@ -1,6 +1,7 @@
 from .models import ApiTestCases, ApiTokenUser
 from rest_framework import serializers
 
+
 class apiTokenUserSerializers(serializers.ModelSerializer):
     username = serializers.CharField(max_length=50)
     password = serializers.CharField(max_length=62)
@@ -35,17 +36,32 @@ class apiTestCaseSerializers(serializers.ModelSerializer):
     method = serializers.IntegerField()
     uri = serializers.CharField(max_length=200)
     is_token = serializers.BooleanField()
-    token_user = serializers.IntegerField()
+    token_user_id = serializers.IntegerField()
     params = serializers.CharField(max_length=500, required=False, allow_blank=True)
     headers = serializers.CharField(max_length=500, required=False, allow_blank=True)
     project_id = serializers.IntegerField()
 
     class Meta:
-        model = ApiTokenUser
+        model = ApiTestCases
         fields = ('id', 'name', 'description','suite_name', 'func_name',
-                  'method', 'uri', 'is_token', 'token_user', 'params',
+                  'method', 'uri', 'is_token', 'token_user_id', 'params',
                   'headers', 'project_id')
+
 
     def create(self, validated_data):
         user = ApiTestCases.objects.create(**validated_data)
         return user
+
+    def update(self, instance, validate):
+        instance.name = validated_data.get('name', instance.name)
+        instance.description = validated_data.get('description', instance.description)
+        instance.suite_name = validated_data.get('suite_name', instance.suite_name)
+        instance.func_name = validated_data.get('func_name', instance.func_name)
+        instance.method = validated_data.get('method', instance.method)
+        instance.uri = validated_data.get('uri', instance.uri)
+        instance.is_token = validated_data.get('is_token', instance.is_token)
+        instance.token_user = validated_data.get('token_user', instance.token_user)
+        instance.params = validated_data.get('params', instance.params)
+        instance.headers = validated_data.get('headers', instance.headers)
+        instance.project_id = validated_data.get('project_id', instance.project_id)
+        return instance

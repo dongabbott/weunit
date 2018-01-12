@@ -10,16 +10,20 @@
             <el-form :model="postForm" :rules="caseRules">
               <el-form-item label-width="120px" label="项目名称:" style="width:500px;">
                 <el-select
-                @change="getProjectSetting"
-                v-model="postForm.project_id"
-                placeholder="请选择项目"
-                value-key="id">
-                  <el-option v-for="(item, index)  in projectSelect"
-                  :label="item.project_name"
-                  :value="index"
-                  :key="item.id">
-                  </el-option>
-                </el-select>
+                 v-model="postForm.project_id"
+                 filterable
+                 remote
+                 reserve-keyword
+                 placeholder="项目"
+                 :remote-method="getProjectList"
+                 @change="getProjectSetting">
+                 <el-option
+                   v-for="item in projectSelect"
+                   :key="item.id"
+                   :label="item.project_name"
+                   :value="item.id">
+                 </el-option>
+               </el-select>
               </el-form-item>
               <el-row>
                 <el-col :span="16">
@@ -62,7 +66,7 @@
                 <el-col :span="8" v-if="postForm.is_token===true" v-show="true">
                   <el-form-item label-width="120px" label="登录用户:">
                     <el-select
-                     v-model="postForm.token_user"
+                     v-model="postForm.token_user_id"
                      filterable
                      remote
                      reserve-keyword
@@ -155,7 +159,7 @@ const defaultForm = {
   headers: '',
   params: '',
   is_token: false,
-  token_user: '',
+  token_user_id: '',
   c_after: '',
   c_before: '',
   project_id: null,

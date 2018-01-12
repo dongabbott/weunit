@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.response import Response
-from .models import Projects, Settings, Tasks, SETTING_CLASS
+from .models import Projects, Settings, Tasks
 from .serializers import ProjectSerializer, SettingSerializer, TaskSerializer
 from rest_framework.views import APIView
 from rest_framework import status
@@ -12,22 +12,19 @@ from rest_framework.decorators import api_view
 from rest_framework.decorators import permission_classes, authentication_classes
 import django_filters.rest_framework
 from rest_framework.pagination import PageNumberPagination
+from rest_framework import generics
+from rest_framework import filters
 
 
-class ProjectList(APIView):
+class ProjectList(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = [TokenAuthentication, SessionAuthentication]
+    queryset = Projects.objects.all()
+    serializer_class = ProjectSerializer
     pagination_class = PageNumberPagination
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('project_name', 'project_desc')
 
-    def get(self, request, format=None):
-        projects = Projects.objects.all()
-        serializer = ProjectSerializer(projects, many=True)
-
-        data = {"count": Projects.objects.count(),
-                "setting_type": [{"key":key , "name": name} for (key, name) in SETTING_CLASS],
-                "data": serializer.data
-                }
-        return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request, format=None):
         serializer = ProjectSerializer(data=request.data)

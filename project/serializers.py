@@ -1,6 +1,6 @@
 # -*-coding:utf-8 -*-
 
-from .models import Projects, Settings, Tasks
+from .models import Projects, Settings, Tasks,SETTING_CLASS
 from rest_framework import serializers
 import random, string, datetime
 from django.conf import settings
@@ -31,9 +31,16 @@ class ProjectSerializer(serializers.ModelSerializer):
     project_root = serializers.CharField(max_length=200, required=False)
     project_status = serializers.BooleanField(required=False)
     setting = SettingSerializer(required=False, many=True)
+    """
+    setting_type = serializers.SerializerMethodField(read_only=True)
 
-    def to_internal_value(self, value):
-        return value
+    def get_setting_type(self, obj):
+        return [{"key":key , "name": name} for (key, name) in SETTING_CLASS]
+    """
+    def to_native(self, obj):
+        ret = super(ProjectSerializer, self).to_native(obj)
+        ret["setting_type"] = [{"key":key , "name": name} for (key, name) in SETTING_CLASS]
+        return ret
 
     class Meta:
         model = Projects
