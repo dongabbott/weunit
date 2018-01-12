@@ -2,7 +2,8 @@
 from __future__ import unicode_literals
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.response import Response
-from .models import Projects, Settings, Tasks
+from .models import Projects, Settings, Tasks, SETTING_CLASS
+from backend.models import REQUEST_METHOD
 from .serializers import ProjectSerializer, SettingSerializer, TaskSerializer
 from rest_framework.views import APIView
 from rest_framework import status
@@ -24,6 +25,12 @@ class ProjectList(generics.ListAPIView):
     pagination_class = PageNumberPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('project_name', 'project_desc')
+
+    def list(self, request, *args, **kwargs):
+        response = super(ProjectList, self).list(request, args, kwargs)
+        response.data['setting_type'] = [{"key":key , "name": name} for (key, name) in SETTING_CLASS]
+        response.data['reqeust_method'] = [{"key":key , "name": name} for (key, name) in REQUEST_METHOD]
+        return response
 
 
     def post(self, request, format=None):

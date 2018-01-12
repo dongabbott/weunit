@@ -4,6 +4,13 @@ from django.db import models
 from project.models import Projects
 from django.conf import settings
 # Create your models here.
+# 请求方式
+REQUEST_METHOD = (
+    (1, 'GET'),
+    (2, 'POST'),
+    (3, 'PUT'),
+    (4, 'DELETE')
+)
 
 
 class ApiTokenUser(models.Model):
@@ -29,12 +36,6 @@ class ApiTestCases(models.Model):
     description = models.TextField(u"描述")
     suite_name = models.CharField(u"unittest套件名", max_length=30)
     func_name = models.CharField(u"unittest方法名", max_length=30)
-    REQUEST_METHOD = (
-        (1, 'GET'),
-        (2, 'POST'),
-        (3, 'PUT'),
-        (4, 'DELETE')
-    )
     method = models.IntegerField(u"请求方法", choices=REQUEST_METHOD)
     uri = models.CharField(u"请求地址", max_length=100)
     is_token = models.BooleanField(u"是否需要token")

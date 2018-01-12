@@ -187,12 +187,9 @@ export default {
     getList() {
       this.listLoading = true
       projectList(this.listQuery).then(response => {
-        console.log(response.data)
         this.list = response.data.results
         this.total = response.data.count
-        console.log(this.total)
         this.settingTypeSelect = response.data.setting_type
-        alert(this.settingTypeSelect)
         this.listLoading = false
       })
     },

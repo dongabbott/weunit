@@ -186,12 +186,7 @@ export default {
     return {
       postForm: Object.assign({}, defaultForm),
       projects: '',
-      reqeustMethod: [
-        { key: 1, name: 'GET' },
-        { key: 2, name: 'POST' },
-        { key: 3, name: 'PUT' },
-        { key: 4, name: 'DELETE' }
-      ],
+      reqeustMethod: [],
       projectSelect: '',
       userLIstOptions: [],
       listQuery: {
@@ -218,7 +213,8 @@ export default {
     getProjectList() {
       projectList(this.listQuery).then(response => {
         if (!response.data) return
-        this.projectSelect = response.data.data
+        this.projectSelect = response.data.results
+        this.reqeustMethod = response.data.reqeust_method
         console.log(this.projectSelect)
       })
     },

@@ -1,10 +1,10 @@
 # -*-coding:utf-8 -*-
 
-from .models import Projects, Settings, Tasks,SETTING_CLASS
+from .models import Projects, Settings, Tasks
 from rest_framework import serializers
-import random, string, datetime
+import random, string
 from django.conf import settings
-import os, json
+import os
 
 
 def project_accesskey(number=15):
@@ -31,16 +31,10 @@ class ProjectSerializer(serializers.ModelSerializer):
     project_root = serializers.CharField(max_length=200, required=False)
     project_status = serializers.BooleanField(required=False)
     setting = SettingSerializer(required=False, many=True)
-    """
-    setting_type = serializers.SerializerMethodField(read_only=True)
 
-    def get_setting_type(self, obj):
-        return [{"key":key , "name": name} for (key, name) in SETTING_CLASS]
-    """
-    def to_native(self, obj):
-        ret = super(ProjectSerializer, self).to_native(obj)
-        ret["setting_type"] = [{"key":key , "name": name} for (key, name) in SETTING_CLASS]
-        return ret
+    def to_internal_value(self, value):
+        # setting中空字符验证的除去
+        return value
 
     class Meta:
         model = Projects
