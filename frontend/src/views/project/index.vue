@@ -57,7 +57,7 @@
     </div>
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form :rules="rules" ref="dataForm" :model="temp" label-position="left" label-width="70px" style='width: 600px; margin-left:50px;'>
+      <el-form :rules="rules" ref="dataForm" :model="temp" label-position="left" label-width="70px" style='width: 450px; margin-left:50px;'>
         <el-form-item label-width="120px" label="项目名称" prop="project_name">
           <el-input v-model="temp.project_name"></el-input>
         </el-form-item>

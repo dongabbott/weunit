@@ -18,8 +18,8 @@
                  :remote-method="getProjectList"
                  @change="getProjectSetting">
                  <el-option
-                   v-for="item in projectSelect"
-                   :key="item.id"
+                   v-for="item, index in projectSelect"
+                   :key="index"
                    :label="item.project_name"
                    :value="item.id">
                  </el-option>
@@ -199,6 +199,7 @@ export default {
   },
   methods: {
     getProjectSetting: function(index, key) {
+      alert(key)
       const apiSttings = this.projectSelect[index]
       apiSttings.setting.map(v => {
         if (v.setting_type === 0) {
@@ -215,13 +216,11 @@ export default {
         if (!response.data) return
         this.projectSelect = response.data.results
         this.reqeustMethod = response.data.reqeust_method
-        console.log(this.projectSelect)
       })
     },
     getRemoteUserList(search) {
       apiTokenUserSearch(search).then(response => {
         if (!response.data.results) return
-        console.log(response)
         this.userLIstOptions = response.data.results.map(v => ({
           key: v.id,
           name: v.username
