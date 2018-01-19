@@ -15,19 +15,15 @@
           <span>{{scope.row.id}}</span>
         </template>
       </el-table-column>
-      <el-table-column width="180px" align="center" label="用户名">
-        <template slot-scope="scope">
-          <span>{{scope.row.username}}</span>
-        </template>
-      </el-table-column>
-      <el-table-column min-width="200px" label="描述">
+      <el-table-column min-width="200px" label="帐号描述">
         <template slot-scope="scope">
           <span>{{scope.row.user_desc}}</span>
         </template>
       </el-table-column>
-      <el-table-column class-name="status-col" label="登录地址" width="200">
+      <el-table-column width="300px" align="left" label="帐号信息">
         <template slot-scope="scope">
-          <span>{{scope.row.token_api}}</span>
+          <li>{{scope.row.username}}</li>
+          <li>{{scope.row.password}}</li>
         </template>
       </el-table-column>
       <el-table-column class-name="status-col" label="token值" width="200">
@@ -49,6 +45,8 @@
         <template slot-scope="scope">
           <el-button type="primary" size="mini" @click="testUserUpdate(scope.row)">编辑</el-button>
           </el-button>
+          <el-button type="info" size="mini" @click="refreshUserToken(scope.row)">刷新token</el-button>
+          </el-button>
           <el-button size="mini" type="danger" @click="deleteTestUser(scope.row.id)">删除
           </el-button>
         </template>
@@ -62,18 +60,30 @@
     </div>
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form :rules="rules" ref="dataForm" :model="temp" label-position="left" label-width="70px" style='width: 600px; margin-left:50px;'>
+      <el-form :rules="rules" ref="dataForm" :model="temp" label-position="left" label-width="70px" style='width: 400px; margin-left:50px;'>
+        <el-form-item  label-width="120px" label="帐号简述" prop="user_desc">
+          <el-input v-model="temp.user_desc"></el-input>
+        </el-form-item>
+        <el-form-item label-width="120px" label="项目名称:" style="width:500px;">
+          <el-select
+            v-model="temp.project_id"
+            filterable
+            allow-create
+            default-first-option
+            placeholder="请选择项目">
+            <el-option
+              v-for="item in projectSelect"
+              :key="item.key"
+              :label="item.name"
+              :value="item.key">
+            </el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label-width="120px" label="用户名" prop="username">
-          <el-input v-model="temp.username"></el-input>
+          <el-input v-model="temp.username" placeholder="example: username=13476085026"></el-input>
         </el-form-item>
-        <el-form-item label-width="120px" label="项目名称" prop="password">
-          <el-input v-model="temp.password"></el-input>
-        </el-form-item>
-        <el-form-item  label-width="120px" label="项目描述" prop="user_desc">
-          <el-input type="textarea" :rows="4" v-model="temp.user_desc"></el-input>
-        </el-form-item>
-        <el-form-item label-width="120px" label="登录地址" prop="token_api">
-          <el-input v-model="temp.token_api"></el-input>
+        <el-form-item label-width="120px" label="密码" prop="password">
+          <el-input v-model="temp.password" placeholder="example: password=123456"></el-input>
         </el-form-item>
         <el-form-item label-width="120px" label="token有效期">
           <el-input v-model="temp.token_term"></el-input>
@@ -89,9 +99,10 @@
 </template>
 
 <script>
-import { apiTokenUsersList, testUserAdd, apiTestUserUpdate, apiTestUserDelete } from '@/api/apitest'
+import { apiTokenUsersList, testUserAdd, apiTestUserUpdate, apiTestUserDelete, apiTokenRefresh } from '@/api/apitest'
 import waves from '@/directive/waves' // 水波纹指令
 import { parseTime } from '@/utils'
+import { projectList } from '@/api/project'
 
 export default {
   name: 'projectTable',
@@ -104,11 +115,10 @@ export default {
       list: null,
       total: null,
       listLoading: true,
+      projectSelect: [],
       listQuery: {
-        page: 1,
         search: null
       },
-      selectGroupKeyValue: null,
       sortOptions: [{ label: '按ID升序列', key: '+id' }, { label: '按ID降序', key: '-id' }],
       statusOptions: ['published', 'draft', 'deleted'],
       showAuditor: false,
@@ -117,7 +127,7 @@ export default {
         username: '',
         password: '',
         user_desc: '',
-        token_api: '',
+        project_id: null,
         token_term: ''
       },
       dialogFormVisible: false,
@@ -130,8 +140,7 @@ export default {
       rules: {
         username: [{ required: true, message: '用户名必须', trigger: 'blur' }],
         password: [{ required: true, message: '密码必须', trigger: 'blur' }],
-        user_desc: [{ required: true, message: '描述必须', trigger: 'blur' }],
-        token_api: [{ required: true, message: '登录地址必须', trigger: 'blur' }]
+        user_desc: [{ required: true, message: '描述必须', trigger: 'blur' }]
       }
     }
   },
@@ -147,8 +156,19 @@ export default {
   },
   created() {
     this.getList()
+    this.getProjectList()
   },
   methods: {
+    getProjectList() {
+      projectList(this.listQuery).then(response => {
+        if (!response.data) return
+        this.projectSelect = response.data.results.map(v => ({
+          key: v.id,
+          name: v.project_name
+        }))
+        console.log(this.projectSelect)
+      })
+    },
     getList() {
       this.listLoading = true
       apiTokenUsersList(this.listQuery).then(response => {
@@ -170,13 +190,18 @@ export default {
         if (valid) {
           testUserAdd(this.temp).then(response => {
             if (response.data) {
-              // this.$router.go(0)
+              this.$router.go(0)
             }
           })
         } else {
           console.log('error submit!!')
           return false
         }
+      })
+    },
+    refreshUserToken(row) {
+      apiTokenRefresh(row.id).then(response => {
+        console.log(response.data)
       })
     },
     deleteTestUser(row) {
@@ -194,7 +219,7 @@ export default {
     updateData(id) {
       apiTestUserUpdate(id, this.temp).then(response => {
         if (response.data.id) {
-          // this.$router.go(0)
+          this.$router.go(0)
         }
       })
     },
@@ -216,7 +241,7 @@ export default {
         username: '',
         password: '',
         user_desc: '',
-        token_api: '',
+        project_id: null,
         token_term: ''
       }
     },

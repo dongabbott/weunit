@@ -16,10 +16,11 @@
                  reserve-keyword
                  placeholder="项目"
                  :remote-method="getProjectList"
-                 @change="getProjectSetting">
+                 @change="getProjectSetting"
+                 value-key="id">
                  <el-option
-                   v-for="item, index in projectSelect"
-                   :key="index"
+                   v-for="(item, index) in projectSelect"
+                   :key="item.id"
                    :label="item.project_name"
                    :value="item.id">
                  </el-option>
@@ -27,9 +28,9 @@
               </el-form-item>
               <el-row>
                 <el-col :span="16">
-                <el-form-item label-width="120px" label="请求地址:">
-                  <el-input placeholder="输入请求地址" v-model="postForm.uri"></el-input>
-                </el-form-item>
+                  <el-form-item label-width="120px" label="请求地址:">
+                    <el-input placeholder="输入请求地址" v-model="postForm.uri"></el-input>
+                  </el-form-item>
                 </el-col>
                 <el-col :span="3">
                 <el-form-item>
@@ -46,6 +47,7 @@
                 </el-col>
               </el-row>
               <el-form-item label-width="120px" label="请求头:">
+                <!-- <json-editor ref="jsonEditor" v-model="postForm.headers" style="width:500px;"></json-editor> -->
                 <el-input type="textarea"  :rows="3" placeholder="请输入请求头" v-model="postForm.headers" style="width:500px;">
                 </el-input>
               </el-form-item>
@@ -71,12 +73,13 @@
                      remote
                      reserve-keyword
                      placeholder="用户关键词"
-                     :remote-method="getRemoteUserList">
+                     :remote-method="getRemoteUserList"
+                     value-key="id">
                      <el-option
                        v-for="item in userLIstOptions"
-                       :key="item.key"
-                       :label="item.name"
-                       :value="item.key">
+                       :key="item.id"
+                       :label="item.username + '_' + item.user_desc"
+                       :value="item.id">
                      </el-option>
                    </el-select>
                   </el-form-item>
@@ -114,23 +117,27 @@
                 </el-col>
               </el-row>
               <el-form-item label-width="700px">
-                <el-button type="primary" @click="createApiTestCase">立即创建</el-button>
-                <el-button>取消</el-button>
+                <el-button type="primary" @click="createApiTestCase">立即{{this.button[this.action]}}</el-button>
+                <el-button type="primary" @click="apiDebug">调试</el-button>
               </el-form-item>
             </el-form>
           </div>
         </el-card>
       </el-col>
 
-      <el-col :span="10" hidden>
+      <el-col :span="10" v-show="debugCard">
         <el-card class="box-card">
           <div slot="header" class="clearfix">
-            <span>图片hover效果</span>
+            <span>调试结果</span>
           </div>
           <div class="component-item">
-            <pan-thumb width="100px" height="100px" image="https://wpimg.wallstcn.com/577965b9-bb9e-4e02-9f0c-095b41417191">
-              vue-element-admin
-            </pan-thumb>
+            <div>
+              <tree-view
+              :data="this.jsonSource"
+              :options="{rootObjectKey: 'data'}"
+              @change-data="onChangeData">
+              </tree-view>
+            </div>
           </div>
         </el-card>
       </el-col>
@@ -147,7 +154,7 @@ import waves from '@/directive/waves/index.js' // 水波纹指令
 import Tinymce from '@/components/Tinymce'
 import Upload from '@/components/Upload/singleImage3'
 import Multiselect from 'vue-multiselect'
-import { apiTokenUserSearch, testCaseAdd } from '@/api/apitest'
+import { apiTokenUserSearch, testCaseAdd, apiTestDetail, testCaseUpdate, apiDebug } from '@/api/apitest'
 import { projectList } from '@/api/project'
 
 const defaultForm = {
@@ -159,7 +166,7 @@ const defaultForm = {
   headers: '',
   params: '',
   is_token: false,
-  token_user_id: '',
+  token_user_id: null,
   c_after: '',
   c_before: '',
   project_id: null,
@@ -180,15 +187,29 @@ export default {
     waves
   },
   created() {
+    if (this.$route.params.id) {
+      this.action = 'update'
+      apiTestDetail(this.$route.params.id).then(response => {
+        if (response.data) {
+          this.postForm = response.data
+        }
+      })
+    }
     this.getProjectList()
   },
   data() {
     return {
       postForm: Object.assign({}, defaultForm),
-      projects: '',
+      action: 'create',
+      button: {
+        create: '创建',
+        update: '更新'
+      },
       reqeustMethod: [],
       projectSelect: '',
       userLIstOptions: [],
+      debugCard: false,
+      jsonSource: '',
       listQuery: {
         search: ''
       },
@@ -198,16 +219,22 @@ export default {
     }
   },
   methods: {
-    getProjectSetting: function(index, key) {
-      alert(key)
-      const apiSttings = this.projectSelect[index]
-      apiSttings.setting.map(v => {
-        if (v.setting_type === 0) {
-          this.postForm.uri = v.setting_value
-        } else if (v.setting_type === 1) {
-          this.postForm.headers = v.setting_value
-        } else if (v.setting_type === 2) {
-          this.postForm.params = v.setting_value
+    getProjectSetting: function(index) {
+      this.projectSelect.map(v => {
+        if (v.id === index) {
+          const apiSttings = v
+          apiSttings.setting.map(v => {
+            if (v.setting_type === 0) {
+              this.postForm.uri = v.setting_value
+              if (this.postForm.uri) {
+                window.localStorage.setItem('chose_project', this.postForm.uri)
+              }
+            } else if (v.setting_type === 1) {
+              this.postForm.headers = v.setting_value
+            } else if (v.setting_type === 2) {
+              this.postForm.params = v.setting_value
+            }
+          })
         }
       })
     },
@@ -221,18 +248,45 @@ export default {
     getRemoteUserList(search) {
       apiTokenUserSearch(search).then(response => {
         if (!response.data.results) return
-        this.userLIstOptions = response.data.results.map(v => ({
-          key: v.id,
-          name: v.username
-        }))
+        this.userLIstOptions = response.data.results
       })
     },
     createApiTestCase() {
-      testCaseAdd(this.postForm).then(response => {
-        if (response.data) {
-          this.$router.go(0)
-        }
+      if (this.action === 'create') {
+        testCaseAdd(this.postForm).then(response => {
+          if (response.data) {
+            this.$router.push({ path: '/apitest/index' })
+          }
+        })
+      } else if (this.action === 'update') {
+        testCaseUpdate(this.$route.params.id, this.postForm).then(response => {
+          if (response.data) {
+            this.$router.push({ path: '/apitest/index' })
+          }
+        })
+      }
+    },
+    apiDebug() {
+      this.debugCard = true
+      // const url = localStorage.getItem('chose_project')
+      // const api_url = this.postForm.uri.replace(url, '')
+      // const api_headers = JSON.parse(this.postForm.headers)
+      const data = {
+        url: this.postForm.uri,
+        params: this.postForm.params,
+        headers: this.postForm.headers,
+        method: 'GET',
+        project_id: this.postForm.project_id,
+        user_id: this.postForm.token_user_id
+      }
+      apiDebug(data).then(response => {
+        console.log(response.data)
+        this.jsonSource = response.data.data.body.content
+        console.log(this.jsonSource)
       })
+    },
+    onChangeData: function(data) {
+      console.log(JSON.stringify(data))
     }
   }
 }

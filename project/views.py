@@ -2,19 +2,18 @@
 from __future__ import unicode_literals
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.response import Response
-from .models import Projects, Settings, Tasks, SETTING_CLASS
-from backend.models import REQUEST_METHOD
-from .serializers import ProjectSerializer, SettingSerializer, TaskSerializer
+from .models import Projects, Settings, Tasks
+from .serializers import ProjectSerializer
 from rest_framework.views import APIView
 from rest_framework import status
 from django.http import Http404
 from rest_framework import permissions
 from rest_framework.decorators import api_view
 from rest_framework.decorators import permission_classes, authentication_classes
-import django_filters.rest_framework
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import generics
 from rest_framework import filters
+from backend.utils.options import REQUEST_METHOD, SETTING_CLASS
 
 
 class ProjectList(generics.ListAPIView):
@@ -78,6 +77,7 @@ class ProjectDetail(APIView):
         project.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class SettingDetail(APIView):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = [TokenAuthentication, SessionAuthentication]
@@ -101,7 +101,7 @@ def xunit_init(request):
     try:
         project = Projects.objects.get(project_key=project_key)
     except Projects.DoesNotExist:
-        return Response({'detail':u'项目不存在'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': u'项目不存在'}, status=status.HTTP_400_BAD_REQUEST)
     task = Tasks.objects.create(project_id=project.id)
     task.save()
     project_data = ProjectSerializer(project)

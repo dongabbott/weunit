@@ -4,7 +4,7 @@
       <el-input @keyup.enter.native="handleFilter" style="width: 200px;" class="filter-item" placeholder="项目名" v-model="listQuery.project_name">
       </el-input>
       <el-button class="filter-item" type="primary" v-waves icon="el-icon-search" @click="handleFilter">搜索</el-button>
-      <el-button class="filter-item" style="margin-left: 10px;" @click="handleCreate" type="primary" icon="el-icon-edit">添加</el-button>
+      <el-button class="filter-item" style="margin-left: 10px;" @click="jumpAdd" type="primary" icon="el-icon-edit">添加</el-button>
       <el-button class="filter-item" type="primary" v-waves icon="el-icon-download" @click="handleDownload">导出</el-button>
     </div>
 
@@ -15,25 +15,37 @@
           <span>{{scope.row.id}}</span>
         </template>
       </el-table-column>
-      <el-table-column width="180px" align="center" label="项目名称">
+      <el-table-column width="100px" align="center" label="用例名称">
         <template slot-scope="scope">
-          <span>{{scope.row.project_name}}</span>
+          <span>{{scope.row.name}}</span>
         </template>
       </el-table-column>
-      <el-table-column min-width="200px" label="项止描述">
+      <el-table-column min-width="150px" label="用例描述">
         <template slot-scope="scope">
-          <span>{{scope.row.project_desc}}</span>
+          <span>{{scope.row.description}}</span>
         </template>
       </el-table-column>
-      <el-table-column class-name="status-col" label="状态" width="100">
+      <el-table-column min-width="120px" label="unittest方法名">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.project_status == true" type="success">启用</el-tag>
-          <el-tag v-if="scope.row.project_status == false" type="danger">关闭</el-tag>
+          <span>{{scope.row.func_name}}</span>
         </template>
       </el-table-column>
-      <el-table-column class-name="status-col" label="项目key" width="200">
+      <el-table-column min-width="120px" label="unittest套件名">
         <template slot-scope="scope">
-          <span>{{scope.row.project_key}}</span>
+          <span>{{scope.row.suite_name}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column min-width="120px" label="请求地址">
+        <template slot-scope="scope">
+          <span>{{scope.row.uri}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column class-name="status-col" label="请求方式" width="100">
+        <template slot-scope="scope">
+          <el-tag v-if="scope.row.method === 1" type="success">GET</el-tag>
+          <el-tag v-if="scope.row.method === 2" type="success">POST</el-tag>
+          <el-tag v-if="scope.row.method === 3" type="info">PUT</el-tag>
+          <el-tag v-if="scope.row.method === 4" type="danger">POST</el-tag>
         </template>
       </el-table-column>
       <el-table-column class-name="status-col" label="创建时间" width="200">
@@ -43,11 +55,11 @@
       </el-table-column>
       <el-table-column align="center" label="操作" width="350" class-name="small-padding">
         <template slot-scope="scope">
-          <el-button type="primary" size="mini" @click="userUpdate(scope.row)">编辑</el-button>
+          <el-button type="primary" size="mini" @click="editTestCaseHandle(scope.row)">编辑</el-button>
           </el-button>
           <el-button  size="mini" type="info" @click="userGroupHandle(scope.row)">项目配置
           </el-button>
-          <el-button size="mini" type="danger" @click="deletePorject(scope.row.id)">删除
+          <el-button size="mini" type="danger" @click="deteleTestCase(scope.row.id)">删除
           </el-button>
         </template>
       </el-table-column>
@@ -58,39 +70,16 @@
         :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit" layout="total, sizes, prev, pager, next, jumper" :total="total">
       </el-pagination>
     </div>
-
-    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form :rules="rules" ref="dataForm" :model="temp" label-position="left" label-width="70px" style='width: 400px; margin-left:50px;'>
-        <el-form-item label="用例名称">
-          <el-input v-model="temp.name"></el-input>
-        </el-form-item>
-        <el-form-item label="unitest套件名">
-          <el-input type="textarea" v-model="temp.project_desc"></el-input>
-        </el-form-item>
-        <el-form-item label="unitest">
-          <el-input type="textarea" v-model="temp.project_desc"></el-input>
-        </el-form-item>
-        <el-form-item label="状态">
-          <input type="radio" v-model="temp.project_status" v-bind:value="true"><label>启用</label>
-          <input type="radio" v-model="temp.project_status" v-bind:value="false"><label>禁用</label>
-        </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button v-if="dialogStatus=='create'" type="primary" @click="createPorject">确 定</el-button>
-        <el-button v-else type="primary" @click="updateData(temp.id)">确 定</el-button>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
 <script>
-import { projectList, projectAdd, projectDel, projectEdit } from '@/api/project'
+import { apiTestCaseList, apiTestCaseDelete } from '@/api/apitest'
 import waves from '@/directive/waves' // 水波纹指令
 import { parseTime } from '@/utils'
 
 export default {
-  name: 'projectTable',
+  name: 'caseTable',
   directives: {
     waves
   },
@@ -102,10 +91,7 @@ export default {
       listLoading: true,
       listQuery: {
         page: 1,
-        project_name: null,
-        project_desc: null,
-        project_status: true,
-        limit: 20
+        name: null
       },
       selectGroupKeyValue: null,
       sortOptions: [{ label: '按ID升序列', key: '+id' }, { label: '按ID降序', key: '-id' }],
@@ -127,10 +113,6 @@ export default {
       dialogFormVisible: false,
       dialogGroup: false,
       dialogStatus: '',
-      textMap: {
-        update: '编辑',
-        create: '创建'
-      },
       dialogPvVisible: false,
       rules: {
         project_name: [{ type: 'date', required: true, message: 'timestamp is required', trigger: 'change' }],
@@ -154,29 +136,14 @@ export default {
   methods: {
     getList() {
       this.listLoading = true
-      projectList(this.listQuery).then(response => {
-        this.list = response.data.data
+      apiTestCaseList(this.listQuery).then(response => {
+        this.list = response.data.results
         this.total = response.data.count
         this.listLoading = false
       })
     },
-    userUpdate(row) {
-      this.temp = Object.assign({}, row) // copy obj
-      this.dialogStatus = 'update'
-      this.dialogFormVisible = true
-      this.$nextTick(() => {
-        this.$refs['dataForm'].clearValidate()
-      })
-    },
-    createPorject() {
-      projectAdd(this.temp).then(response => {
-        if (response.data) {
-          this.$router.go(0)
-        }
-      })
-    },
-    deletePorject(row) {
-      projectDel(row).then(response => {
+    deteleTestCase(row) {
+      apiTestCaseDelete(row).then(response => {
         this.$notify({
           title: '成功',
           message: '删除成功',
@@ -187,13 +154,16 @@ export default {
         this.list.splice(index, 1)
       })
     },
-    updateData(id) {
-      console.log(this.temp)
-      projectEdit(id, this.temp).then(response => {
-        if (response.data.id) {
-          this.$router.go(0)
-        }
+    userUpdate(row) {
+      this.temp = Object.assign({}, row) // copy obj
+      this.dialogStatus = 'update'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
       })
+    },
+    jumpAdd() {
+      this.$router.push({ path: '/apitest/add' })
     },
     userGroupHandle(row) {
       this.dialogStatus = 'setting'
@@ -228,14 +198,8 @@ export default {
         this.$refs['dataForm'].clearValidate()
       })
     },
-    handleUpdate(row) {
-      this.temp = Object.assign({}, row) // copy obj
-      this.temp.timestamp = new Date(this.temp.timestamp)
-      this.dialogStatus = 'update'
-      this.dialogFormVisible = true
-      this.$nextTick(() => {
-        this.$refs['dataForm'].clearValidate()
-      })
+    editTestCaseHandle(row) {
+      this.$router.push({ path: '/apitest/edit/' + row.id })
     },
     handleDownload() {
       require.ensure([], () => {

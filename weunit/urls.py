@@ -46,6 +46,9 @@ urlpatterns = [
     url(r'^api/project/setting/(?P<pk>[0-9]+)/$', project_view.SettingDetail.as_view()),
     url(r'^api/project/ready/$', project_view.xunit_init),
     url(r'^api/apitest/users/$', apitest_view.apiTokenUserList.as_view()),
+    url(r'^api/apitest/users/refresh/$', apitest_view.refresh),
     url(r'^api/apitest/users/(?P<pk>[0-9]+)/$', apitest_view.apiTokenUserDetail.as_view()),
     url(r'^api/apitest/case/$', apitest_view.apiTestCaseList.as_view()),
+    url(r'^api/apitest/case/(?P<pk>[0-9]+)/$', apitest_view.apiTestCaseDetail.as_view()),
+    url(r'^api/apitest/case/debug/$', apitest_view.http_remote),
 ]

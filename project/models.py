@@ -4,13 +4,6 @@ from django.conf import settings
 from django.db import models
 import uuid
 
-# Create your models here.
-SETTING_CLASS = [
-    (0, u"服务地址"),
-    (1, u"请求头"),
-    (2, u"默认参数"),
-    (3, u"数据库")
-]
 
 class Projects(models.Model):
     project_name = models.CharField(u'项目名称', max_length=30, blank=False)
@@ -28,9 +21,12 @@ class Projects(models.Model):
     def __unicode__(self):
         return self.project_name
 
+    @property
+    def all_setting(self):
+        return settings.all()
+
 
 class Settings(models.Model):
-
     setting_type = models.IntegerField(u"配置类型")
     setting_value = models.TextField(u"配置值", max_length=500)
     setting_desc = models.TextField(u"配置描述", max_length=500)
@@ -41,8 +37,7 @@ class Settings(models.Model):
         db_table = "project_settings"
 
     def __unicode__(self):
-        return self.address
-
+        return self.setting_desc
 
 class Tasks(models.Model):
     task_id = models.UUIDField(default=uuid.uuid4, null=False)

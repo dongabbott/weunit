@@ -44,10 +44,69 @@ export function apiTestUserDelete(id) {
   })
 }
 
+export function apiTokenRefresh(id) {
+  return request({
+    url: '/api/apitest/users/refresh/',
+    method: 'post',
+    data: { user_id: id }
+  })
+}
+
 // 用例创建
 export function testCaseAdd(data) {
   return request({
     url: '/api/apitest/case/',
+    method: 'post',
+    data
+  })
+}
+
+// 用例更新
+export function testCaseUpdate(id, data) {
+  return request({
+    url: '/api/apitest/case/' + id,
+    method: 'put',
+    data
+  })
+}
+
+// 用例删除接口
+export function apiTestCaseDelete(id) {
+  return request({
+    url: '/api/apitest/case/' + id + '/',
+    method: 'delete'
+  })
+}
+
+// 用例列表数据
+export function apiTestCaseList(query) {
+  return request({
+    url: '/api/apitest/case/',
+    method: 'get',
+    params: query
+  })
+}
+
+// 用例查询
+export function apiTestSearch(query) {
+  return request({
+    url: '/api/apitest/case/',
+    method: 'get',
+    params: query
+  })
+}
+
+export function apiTestDetail(id) {
+  return request({
+    url: '/api/apitest/case/' + id + '/',
+    method: 'get'
+  })
+}
+
+// api请求接口调试
+export function apiDebug(data) {
+  return request({
+    url: '/api/apitest/case/debug/',
     method: 'post',
     data
   })

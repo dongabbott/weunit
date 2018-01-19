@@ -6,6 +6,7 @@ import App from './App'
 import router from './router'
 import store from './store'
 import * as filters from './filters' // 全局filter
+import TreeView from 'vue-json-tree-view'
 import './icons' // icon
 import './errorLog'// error log
 import './permission' // 权限
@@ -14,6 +15,8 @@ import './permission' // 权限
 Vue.use(Element, {
   i18n: (key, value) => i18n.t(key, value)
 })
+
+Vue.use(TreeView)
 
 // register global utility filters.
 Object.keys(filters).forEach(key => {

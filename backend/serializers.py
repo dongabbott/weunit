@@ -6,13 +6,13 @@ class apiTokenUserSerializers(serializers.ModelSerializer):
     username = serializers.CharField(max_length=50)
     password = serializers.CharField(max_length=62)
     user_desc = serializers.CharField(max_length=200)
-    token_api = serializers.CharField(max_length=200)
+    project_id = serializers.IntegerField()
     token_term = serializers.IntegerField()
     token_value = serializers.CharField(max_length=200, required=False, allow_blank=True)
 
     class Meta:
         model = ApiTokenUser
-        fields = ('id', 'username', 'password','user_desc', 'token_api',
+        fields = ('id', 'username', 'password', 'user_desc', 'project_id',
                   'token_value', 'token_term', 'update_time')
 
     def create(self, validated_data):
@@ -20,13 +20,14 @@ class apiTokenUserSerializers(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
+        instance.project_id = validated_data.get('project_id', instance.project_id)
         instance.username = validated_data.get('username', instance.username)
         instance.password = validated_data.get('password', instance.password)
         instance.user_desc = validated_data.get('user_desc', instance.user_desc)
-        instance.token_api = validated_data.get('token_api', instance.token_api)
         instance.token_term = validated_data.get('token_term', instance.token_term)
         instance.save()
         return instance
+
 
 class apiTestCaseSerializers(serializers.ModelSerializer):
     name = serializers.CharField(max_length=50)
@@ -36,7 +37,7 @@ class apiTestCaseSerializers(serializers.ModelSerializer):
     method = serializers.IntegerField()
     uri = serializers.CharField(max_length=200)
     is_token = serializers.BooleanField()
-    token_user_id = serializers.IntegerField()
+    token_user_id = serializers.IntegerField(required=False, allow_null=True)
     params = serializers.CharField(max_length=500, required=False, allow_blank=True)
     headers = serializers.CharField(max_length=500, required=False, allow_blank=True)
     project_id = serializers.IntegerField()
@@ -45,14 +46,14 @@ class apiTestCaseSerializers(serializers.ModelSerializer):
         model = ApiTestCases
         fields = ('id', 'name', 'description','suite_name', 'func_name',
                   'method', 'uri', 'is_token', 'token_user_id', 'params',
-                  'headers', 'project_id')
-
+                  'headers', 'project_id', 'create_time'
+                  )
 
     def create(self, validated_data):
         user = ApiTestCases.objects.create(**validated_data)
         return user
 
-    def update(self, instance, validate):
+    def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
         instance.description = validated_data.get('description', instance.description)
         instance.suite_name = validated_data.get('suite_name', instance.suite_name)

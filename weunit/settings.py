@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
+import djcelery
 import logging
 import datetime
 import django.utils.log
@@ -19,7 +20,7 @@ import logging.handlers
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+djcelery.setup_loader()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -45,13 +46,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'django_filters',
+    'djcelery',
     'rest_framework_swagger',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_docs',
     'rest_auth',
     'project',
-    'backend'
+    'backend',
     # 'webpack_loader',
 ]
 
@@ -166,6 +168,10 @@ REST_FRAMEWORK = {
     ),
     'DATETIME_FORMAT': "%Y-%m-%d %H:%M:%S",
 }
+
+# celery相关配置
+BROKER_URL = 'amqp://guest:guest@localhost:5672/'
+CELERY_RESULT_BACKEND = 'amqp://guest:guest@localhost:5672/'
 
 
 # 是否关闭接口文档
