@@ -17,7 +17,7 @@
           <span>{{scope.row.project_name}}</span>
         </template>
       </el-table-column>
-      <el-table-column min-width="200px" label="项止描述">
+      <el-table-column min-width="200px" label="项目描述">
         <template slot-scope="scope">
           <span>{{scope.row.project_desc}}</span>
         </template>
@@ -142,10 +142,6 @@ export default {
         page: 1
       },
       settingTypeSelect: '',
-      selectGroupKeyValue: null,
-      sortOptions: [{ label: '按ID升序列', key: '+id' }, { label: '按ID降序', key: '-id' }],
-      statusOptions: ['published', 'draft', 'deleted'],
-      showAuditor: false,
       temp: {
         id: undefined,
         project_name: '',
@@ -206,7 +202,7 @@ export default {
         if (valid) {
           projectAdd(this.temp).then(response => {
             if (response.data) {
-              this.$router.go(0)
+              this.getList()
             }
           })
         } else {
@@ -230,7 +226,9 @@ export default {
     updateData(id) {
       projectEdit(id, this.temp).then(response => {
         if (response.data.id) {
-          this.$router.go(0)
+          this.dialogFormVisible = false
+          this.dialogSetting = false
+          this.getList()
         }
       })
     },

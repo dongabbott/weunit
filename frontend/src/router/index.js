@@ -102,6 +102,7 @@ export const asyncRouterMap = [
       { path: 'index', component: _import('apitest/index'), name: 'apitest', meta: { title: 'apitestList', icon: 'component' }},
       { path: 'users', component: _import('apitest/users'), name: 'apitest', meta: { title: 'apitestUser', icon: 'component' }},
       { path: 'add', component: _import('apitest/create'), name: 'apitest', meta: { title: 'apitest', icon: 'component' }},
+      { path: 'suite', component: _import('apitest/suite'), name: 'apitest', meta: { title: 'testsuite', icon: 'component' }},
       { path: 'edit/:id', component: _import('apitest/create'), name: 'apitest', meta: { title: 'apitest', icon: 'component' }, hidden: true }
     ]
   },

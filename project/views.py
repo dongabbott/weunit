@@ -31,7 +31,6 @@ class ProjectList(generics.ListAPIView):
         response.data['reqeust_method'] = [{"key":key , "name": name} for (key, name) in REQUEST_METHOD]
         return response
 
-
     def post(self, request, format=None):
         serializer = ProjectSerializer(data=request.data)
         if serializer.is_valid():

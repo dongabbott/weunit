@@ -1,4 +1,4 @@
-from .models import ApiTestCases, ApiTokenUser
+from .models import ApiTestCases, ApiTokenUser, TestSuite, SuiteChangeLog
 from rest_framework import serializers
 
 
@@ -28,41 +28,62 @@ class apiTokenUserSerializers(serializers.ModelSerializer):
         instance.save()
         return instance
 
+class SuiteChangeLogSerializers(serializers.ModelSerializer):
+
+    class Meta:
+        model = SuiteChangeLog
+        fields = ('id', 'code_content', 'create_time')
+
+class testSuiteSerializers(serializers.ModelSerializer):
+    suite_name = serializers.CharField(max_length=50)
+    suite_desc = serializers.CharField(max_length=200)
+    project_id = serializers.IntegerField()
+    suite_log = SuiteChangeLogSerializers(many=True, read_only=True)
+
+    class Meta:
+        model = TestSuite
+        fields = ('id', 'suite_name', 'suite_desc', 'project_id', 'create_time', 'suite_log')
+
+    def create(self, validated_data):
+        suite = TestSuite.objects.create(**validated_data)
+        return suite
+
+
 
 class apiTestCaseSerializers(serializers.ModelSerializer):
     name = serializers.CharField(max_length=50)
     description = serializers.CharField(max_length=200)
-    suite_name = serializers.CharField(max_length=50)
     func_name = serializers.CharField(max_length=50)
     method = serializers.IntegerField()
     uri = serializers.CharField(max_length=200)
     is_token = serializers.BooleanField()
-    token_user_id = serializers.IntegerField(required=False, allow_null=True)
     params = serializers.CharField(max_length=500, required=False, allow_blank=True)
     headers = serializers.CharField(max_length=500, required=False, allow_blank=True)
     project_id = serializers.IntegerField()
+    suite_id = serializers.IntegerField()
+    token_user_id = serializers.IntegerField(required=False)
 
     class Meta:
         model = ApiTestCases
-        fields = ('id', 'name', 'description','suite_name', 'func_name',
-                  'method', 'uri', 'is_token', 'token_user_id', 'params',
-                  'headers', 'project_id', 'create_time'
-                  )
+        fields = ('id', 'name', 'description','suite_id', 'func_name',
+                  'method', 'uri', 'is_token', 'params', 'token_user_id',
+                  'headers', 'project_id', 'create_time')
 
     def create(self, validated_data):
-        user = ApiTestCases.objects.create(**validated_data)
-        return user
+        case = ApiTestCases.objects.create(**validated_data)
+        return case
 
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
         instance.description = validated_data.get('description', instance.description)
-        instance.suite_name = validated_data.get('suite_name', instance.suite_name)
         instance.func_name = validated_data.get('func_name', instance.func_name)
         instance.method = validated_data.get('method', instance.method)
         instance.uri = validated_data.get('uri', instance.uri)
         instance.is_token = validated_data.get('is_token', instance.is_token)
-        instance.token_user = validated_data.get('token_user', instance.token_user)
         instance.params = validated_data.get('params', instance.params)
         instance.headers = validated_data.get('headers', instance.headers)
         instance.project_id = validated_data.get('project_id', instance.project_id)
+        instance.suite_id = validated_data.get('suite_id', instance.suite_id)
+        instance.token_user_id = validated_data.get('token_user_id', instance.token_user_id)
+        instance.save()
         return instance

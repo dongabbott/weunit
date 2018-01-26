@@ -97,7 +97,7 @@ WSGI_APPLICATION = 'weunit.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'weunit',
+        'NAME': 'GanUnit',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',

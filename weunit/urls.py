@@ -51,4 +51,5 @@ urlpatterns = [
     url(r'^api/apitest/case/$', apitest_view.apiTestCaseList.as_view()),
     url(r'^api/apitest/case/(?P<pk>[0-9]+)/$', apitest_view.apiTestCaseDetail.as_view()),
     url(r'^api/apitest/case/debug/$', apitest_view.http_remote),
+    url(r'^api/apitest/suite/$', apitest_view.testSuiteList.as_view()),
 ]

@@ -24,14 +24,36 @@ class WeHttpClient(object):
         elif method == 'DELETE':
             return requests.delete(address, headers=self.headers)
         elif method == 'POST':
-            return requests.post(address, data=self.data, files=self.files, allow_redirects=True)
+            return requests.post(address,
+                                 data=self.params,
+                                 headers=self.headers,
+                                 files=self.files,
+                                 allow_redirects=True)
         elif method == 'PUT':
-            return requests.put(address, data=self.data, files=self.files, allow_redirects=True)
+            return requests.put(address,
+                                data=self.params,
+                                headers=self.headers,
+                                files=self.files,
+                                allow_redirects=True)
         else:
             raise ValueError(u'method is must be in ["GET", "POST", "PUT", "DELETE"]')
         return None
 
+    def http_header(self, method="GET"):
+        """
+        :param method: 请求方法
+        :return:
+        """
+        res = self.send(method=method)
+        data = res.headers
+        return data
+
     def body(self, method="GET"):
+        """
+        将请求结果分类为Json和html
+        :param method: 请求方法
+        :return:
+        """
         res = self.send(method=method)
         try:
             content = res.json()
@@ -39,22 +61,32 @@ class WeHttpClient(object):
         except JSONDecodeError:
             content = res.content
             result_type = 'html'
-        except BaseHTTPError, e:
+        except BaseHTTPError as e:
             result_type = 'error'
             content = e
         return {'type': result_type, 'content': content}
 
-    def http_header(self, method="GET"):
-        res = self.send(method=method)
-        data = res.headers
-        return data
-
     def result(self, method="GET"):
-        res = self.send(method=method)
+        """
+        初始化请求的接口数据
+        :param method: 请求方法
+        :return:
+        """
+        try:
+            res = self.send(method=method)
+            content = res.json()
+            result_type = 'json'
+        except JSONDecodeError:
+            content = res.content.decode('utf-8')
+            result_type = 'html'
+        except Exception as e:
+            result_type = 'error'
+            content = str(e)
+            return None
         request_result = {
             'url': res.url,
             'time': res.elapsed.microseconds/1000,
-            'body': self.body(method=method),
+            'body': {'type': result_type, 'content': content},
             'status': res.status_code,
             'headers': res.headers
         }

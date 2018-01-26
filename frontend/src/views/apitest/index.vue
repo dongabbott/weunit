@@ -25,14 +25,14 @@
           <span>{{scope.row.description}}</span>
         </template>
       </el-table-column>
-      <el-table-column min-width="120px" label="unittest方法名">
-        <template slot-scope="scope">
-          <span>{{scope.row.func_name}}</span>
-        </template>
-      </el-table-column>
       <el-table-column min-width="120px" label="unittest套件名">
         <template slot-scope="scope">
           <span>{{scope.row.suite_name}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column min-width="120px" label="unittest方法名">
+        <template slot-scope="scope">
+          <span>{{scope.row.func_name}}</span>
         </template>
       </el-table-column>
       <el-table-column min-width="120px" label="请求地址">
@@ -43,7 +43,7 @@
       <el-table-column class-name="status-col" label="请求方式" width="100">
         <template slot-scope="scope">
           <el-tag v-if="scope.row.method === 1" type="success">GET</el-tag>
-          <el-tag v-if="scope.row.method === 2" type="success">POST</el-tag>
+          <el-tag v-if="scope.row.method === 2" type="waring">POST</el-tag>
           <el-tag v-if="scope.row.method === 3" type="info">PUT</el-tag>
           <el-tag v-if="scope.row.method === 4" type="danger">POST</el-tag>
         </template>
@@ -57,7 +57,9 @@
         <template slot-scope="scope">
           <el-button type="primary" size="mini" @click="editTestCaseHandle(scope.row)">编辑</el-button>
           </el-button>
-          <el-button  size="mini" type="info" @click="userGroupHandle(scope.row)">项目配置
+          <el-button  size="mini" @click="">生成unittest
+          </el-button>
+          <el-button  size="mini" type="info" @click="editTestUnitCase(scope.row)">代码编辑
           </el-button>
           <el-button size="mini" type="danger" @click="deteleTestCase(scope.row.id)">删除
           </el-button>
@@ -70,6 +72,20 @@
         :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit" layout="total, sizes, prev, pager, next, jumper" :total="total">
       </el-pagination>
     </div>
+
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
+      <div>
+        <codemirror ref="myCm"
+              :value="this.unit_code"
+              :options="cmOptions"
+              @input="onCmCodeChange">
+        </codemirror>
+    </div>
+    <div slot="footer" class="dialog-footer">
+      <el-button @click="dialogSetting = false">取 消</el-button>
+      <el-button type="primary" @click="SaveCoding">确 定</el-button>
+    </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -77,11 +93,35 @@
 import { apiTestCaseList, apiTestCaseDelete } from '@/api/apitest'
 import waves from '@/directive/waves' // 水波纹指令
 import { parseTime } from '@/utils'
+import Brace from 'vue-bulma-brace'
+import { codemirror } from 'vue-codemirror'
+import 'codemirror/lib/codemirror.css'
+// language
+import 'codemirror/mode/python/python.js'
+// theme css
+import 'codemirror/theme/base16-light.css'
+// require active-line.js
+import 'codemirror/addon/selection/active-line.js'
+// closebrackets
+import 'codemirror/addon/edit/closebrackets.js'
+// keyMap
+import 'codemirror/mode/clike/clike.js'
+import 'codemirror/addon/edit/matchbrackets.js'
+import 'codemirror/addon/comment/comment.js'
+import 'codemirror/addon/dialog/dialog.js'
+import 'codemirror/addon/dialog/dialog.css'
+import 'codemirror/addon/search/searchcursor.js'
+import 'codemirror/addon/search/search.js'
+import 'codemirror/keymap/emacs.js'
 
 export default {
   name: 'caseTable',
   directives: {
     waves
+  },
+  components: {
+    Brace,
+    codemirror
   },
   data() {
     return {
@@ -114,6 +154,21 @@ export default {
       dialogGroup: false,
       dialogStatus: '',
       dialogPvVisible: false,
+      unit_code: '',
+      textMap: {
+        coding: '代码编辑'
+      },
+      cmOptions: {
+        // codemirror options
+        autoCloseBrackets: true,
+        tabSize: 4,
+        styleActiveLine: true,
+        lineNumbers: true,
+        line: true,
+        mode: 'text/x-python',
+        theme: 'base16-light',
+        keyMap: 'emacs'
+      },
       rules: {
         project_name: [{ type: 'date', required: true, message: 'timestamp is required', trigger: 'change' }],
         project_desc: [{ required: true, message: 'title is required', trigger: 'blur' }]
@@ -132,6 +187,11 @@ export default {
   },
   created() {
     this.getList()
+  },
+  computed: {
+    codemirror() {
+      return this.$refs.myCm.codemirror
+    }
   },
   methods: {
     getList() {
@@ -165,9 +225,12 @@ export default {
     jumpAdd() {
       this.$router.push({ path: '/apitest/add' })
     },
-    userGroupHandle(row) {
-      this.dialogStatus = 'setting'
-      this.dialogGroup = true
+    SaveCoding() {
+      alert(this.unit_code)
+    },
+    editTestUnitCase(row) {
+      this.dialogStatus = 'coding'
+      this.dialogFormVisible = true
     },
     handleFilter() {
       this.listQuery.page = 1
@@ -200,6 +263,9 @@ export default {
     },
     editTestCaseHandle(row) {
       this.$router.push({ path: '/apitest/edit/' + row.id })
+    },
+    onCmCodeChange(newCode) {
+      this.unit_code = newCode
     },
     handleDownload() {
       require.ensure([], () => {

@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "axios": "0.17.1",
+    "bulma": "^0.6.2",
     "clipboard": "1.7.1",
     "codemirror": "5.31.0",
     "dropzone": "5.2.0",
@@ -33,6 +34,9 @@
     "simplemde": "1.11.2",
     "sortablejs": "1.6.1",
     "vue": "2.5.9",
+    "vue-bulma": "0.0.35",
+    "vue-bulma-brace": "^0.1.0",
+    "vue-codemirror": "^4.0.3",
     "vue-count-to": "1.0.10",
     "vue-i18n": "7.3.2",
     "vue-json-tree-view": "^2.1.3",

@@ -44,11 +44,46 @@ export function apiTestUserDelete(id) {
   })
 }
 
+// 刷新token
 export function apiTokenRefresh(id) {
   return request({
     url: '/api/apitest/users/refresh/',
     method: 'post',
     data: { user_id: id }
+  })
+}
+
+export function testSuiteList(query) {
+  return request({
+    url: '/api/apitest/suite/',
+    method: 'get',
+    params: query
+  })
+}
+
+// 套件添加接口
+export function testSuiteAdd(data) {
+  return request({
+    url: '/api/apitest/suite/',
+    method: 'post',
+    data
+  })
+}
+
+// 套件更新
+export function testSuiteUpdate(id, data) {
+  return request({
+    url: '/api/apitest/suite/' + id + '/',
+    method: 'put',
+    data
+  })
+}
+
+// 套件删除接口
+export function testSuiteDelete(id) {
+  return request({
+    url: '/api/apitest/suite/' + id + '/',
+    method: 'delete'
   })
 }
 
@@ -64,7 +99,7 @@ export function testCaseAdd(data) {
 // 用例更新
 export function testCaseUpdate(id, data) {
   return request({
-    url: '/api/apitest/case/' + id,
+    url: '/api/apitest/case/' + id + '/',
     method: 'put',
     data
   })

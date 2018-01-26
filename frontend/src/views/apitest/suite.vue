@@ -1,8 +1,12 @@
 <template>
   <div class="app-container calendar-list-container">
     <div class="filter-container">
-      <el-input @keyup.enter.native="handleFilter" style="width: 200px;" class="filter-item" placeholder="用户名或描述" v-model="listQuery.search">
+      <el-input @keyup.enter.native="handleFilter" style="width: 200px;" class="filter-item" placeholder="套件名称" v-model="listQuery.suite_name">
       </el-input>
+      <el-select clearable class="filter-item" style="width: 130px" v-model="listQuery.project_id" placeholder="所属项目">
+        <el-option v-for="item in projectSelect" :key="item.key" :label="item.name" :value="item.key">
+        </el-option>
+      </el-select>
       <el-button class="filter-item" type="primary" v-waves icon="el-icon-search" @click="handleFilter">搜索</el-button>
       <el-button class="filter-item" style="margin-left: 10px;" @click="handleCreate" type="primary" icon="el-icon-edit">添加</el-button>
       <el-button class="filter-item" type="primary" v-waves icon="el-icon-download" @click="handleDownload">导出</el-button>
@@ -15,39 +19,28 @@
           <span>{{scope.row.id}}</span>
         </template>
       </el-table-column>
-      <el-table-column min-width="200px" label="帐号描述">
+      <el-table-column min-width="200px" label="套件名称">
         <template slot-scope="scope">
-          <span>{{scope.row.user_desc}}</span>
+          <span>{{scope.row.suite_name}}</span>
         </template>
       </el-table-column>
-      <el-table-column width="300px" align="left" label="帐号信息">
+      <el-table-column width="300px" align="left" label="套件描述">
         <template slot-scope="scope">
-          <li>{{scope.row.username}}</li>
-          <li>{{scope.row.password}}</li>
-        </template>
-      </el-table-column>
-      <el-table-column class-name="status-col" label="token值" width="200">
-        <template slot-scope="scope">
-          <span>{{scope.row.token_value}}</span>
-        </template>
-      </el-table-column>
-      <el-table-column class-name="status-col" label="token有效期" width="80">
-        <template slot-scope="scope">
-          <span>{{scope.row.token_term}}</span>
+          <span>{{scope.row.suite_desc}}</span>
         </template>
       </el-table-column>
       <el-table-column class-name="status-col" label="更新时间" width="200">
         <template slot-scope="scope">
-          <span>{{scope.row.update_time}}</span>
+          <span>{{scope.row.create_time}}</span>
         </template>
       </el-table-column>
       <el-table-column align="center" label="操作" width="350" class-name="small-padding">
         <template slot-scope="scope">
-          <el-button type="primary" size="mini" @click="testUserUpdate(scope.row)">编辑</el-button>
+          <el-button type="primary" size="mini" @click="testSuiteUpdate(scope.row)">编辑</el-button>
           </el-button>
-          <el-button type="info" size="mini" @click="refreshUserToken(scope.row)">刷新token</el-button>
+          <el-button type="info" size="mini" @click="">刷新token</el-button>
           </el-button>
-          <el-button size="mini" type="danger" @click="deleteTestUser(scope.row.id)">删除
+          <el-button size="mini" type="danger" @click="deleteTestSuite(scope.row.id)">删除
           </el-button>
         </template>
       </el-table-column>
@@ -61,9 +54,6 @@
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form :rules="rules" ref="dataForm" :model="temp" label-position="left" label-width="70px" style='width: 400px; margin-left:50px;'>
-        <el-form-item  label-width="120px" label="帐号简述" prop="user_desc">
-          <el-input v-model="temp.user_desc"></el-input>
-        </el-form-item>
         <el-form-item label-width="120px" label="项目名称:" style="width:500px;">
           <el-select
             v-model="temp.project_id"
@@ -79,19 +69,16 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label-width="120px" label="用户名" prop="username">
-          <el-input v-model="temp.username" placeholder="example: username=13476085026"></el-input>
+        <el-form-item label-width="120px" label="套件名" prop="suite_name">
+          <el-input v-model="temp.suite_name" placeholder="example: TestUserLoginCase"></el-input>
         </el-form-item>
-        <el-form-item label-width="120px" label="密码" prop="password">
-          <el-input v-model="temp.password" placeholder="example: password=123456"></el-input>
-        </el-form-item>
-        <el-form-item label-width="120px" label="token有效期">
-          <el-input v-model="temp.token_term"></el-input>
+        <el-form-item label-width="120px" label="套件描述">
+          <el-input v-model="temp.suite_desc"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button v-if="dialogStatus=='create'" type="primary" @click="createTestuser">确 定</el-button>
+        <el-button v-if="dialogStatus=='create'" type="primary" @click="createTestSuite">确 定</el-button>
         <el-button v-else type="primary" @click="updateData(temp.id)">确 定</el-button>
       </div>
     </el-dialog>
@@ -99,7 +86,7 @@
 </template>
 
 <script>
-import { apiTokenUsersList, testUserAdd, apiTestUserUpdate, apiTestUserDelete, apiTokenRefresh } from '@/api/apitest'
+import { testSuiteList, testSuiteAdd, testSuiteDelete } from '@/api/apitest'
 import waves from '@/directive/waves' // 水波纹指令
 import { parseTime } from '@/utils'
 import { projectList } from '@/api/project'
@@ -117,18 +104,17 @@ export default {
       listLoading: true,
       projectSelect: [],
       listQuery: {
-        search: null
+        project_id: null,
+        suite_name: null
       },
       sortOptions: [{ label: '按ID升序列', key: '+id' }, { label: '按ID降序', key: '-id' }],
       statusOptions: ['published', 'draft', 'deleted'],
       showAuditor: false,
       temp: {
         id: undefined,
-        username: '',
-        password: '',
-        user_desc: '',
-        project_id: null,
-        token_term: ''
+        suite_name: '',
+        suite_desc: '',
+        project_id: null
       },
       dialogFormVisible: false,
       dialogStatus: '',
@@ -138,9 +124,7 @@ export default {
       },
       dialogPvVisible: false,
       rules: {
-        username: [{ required: true, message: '用户名必须', trigger: 'blur' }],
-        password: [{ required: true, message: '密码必须', trigger: 'blur' }],
-        user_desc: [{ required: true, message: '描述必须', trigger: 'blur' }]
+        suite_name: [{ required: true, message: '套件名必须填写', trigger: 'blur' }]
       }
     }
   },
@@ -171,13 +155,13 @@ export default {
     },
     getList() {
       this.listLoading = true
-      apiTokenUsersList(this.listQuery).then(response => {
+      testSuiteList(this.listQuery).then(response => {
         this.list = response.data.results
         this.total = response.data.count
         this.listLoading = false
       })
     },
-    testUserUpdate(row) {
+    testSuiteUpdate(row) {
       this.temp = Object.assign({}, row) // copy obj
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
@@ -185,12 +169,13 @@ export default {
         this.$refs['dataForm'].clearValidate()
       })
     },
-    createTestuser() {
+    createTestSuite() {
       this.$refs.dataForm.validate(valid => {
         if (valid) {
-          testUserAdd(this.temp).then(response => {
+          testSuiteAdd(this.temp).then(response => {
             if (response.data) {
-              this.$router.go(0)
+              this.getList()
+              this.dialogFormVisible = false
             }
           })
         } else {
@@ -199,15 +184,8 @@ export default {
         }
       })
     },
-    refreshUserToken(row) {
-      apiTokenRefresh(row.id).then(response => {
-        if (response.data) {
-          this.getList()
-        }
-      })
-    },
-    deleteTestUser(row) {
-      apiTestUserDelete(row).then(response => {
+    deleteTestSuite(row) {
+      testSuiteDelete(row).then(response => {
         this.$notify({
           title: '成功',
           message: '删除成功',
@@ -216,14 +194,6 @@ export default {
         })
         const index = this.list.indexOf(row)
         this.list.splice(index, 1)
-      })
-    },
-    updateData(id) {
-      apiTestUserUpdate(id, this.temp).then(response => {
-        if (response.data.id) {
-          this.dialogFormVisible = false
-          this.getList()
-        }
       })
     },
     handleFilter() {
@@ -241,11 +211,9 @@ export default {
     resetTemp() {
       this.temp = {
         id: undefined,
-        username: '',
-        password: '',
-        user_desc: '',
-        project_id: null,
-        token_term: ''
+        suite_name: '',
+        suite_desc: '',
+        project_id: null
       }
     },
     handleCreate() {
