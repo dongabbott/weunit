@@ -106,15 +106,22 @@
               <el-row>
                 <el-col :span="9">
                 <el-form-item label-width="120px" label="套件名称:">
-                  <el-select v-model="postForm.suite_name" placeholder="请选择">
-                    <el-option
-                      v-for="item in testSuiteOptions"
-                      :key="item.value"
-                      :label="item.label"
-                      :value="item.value">
-                    </el-option>
+                  <el-select
+                   v-model="postForm.suite_id"
+                   filterable
+                   remote
+                   reserve-keyword
+                   placeholder="项目"
+                   :remote-method="getRemoteSuiteList"
+                   value-key="id">
+                   <el-option
+                     v-for="item in testSuiteOptions"
+                     :key="item.id"
+                     :label="item.suite_name"
+                     :value="item.id">
+                   </el-option>
                   </el-select>
-                </el-form-item>
+                 </el-form-item></el-form-item>
                 </el-col>
                 <el-col :span="8">
                 <el-form-item label-width="120px" label="用例方法名:">
@@ -178,6 +185,7 @@ import Upload from '@/components/Upload/singleImage3'
 import Multiselect from 'vue-multiselect'
 import { apiTokenUserSearch, testCaseAdd, apiTestDetail, testCaseUpdate, apiDebug } from '@/api/apitest'
 import { projectList } from '@/api/project'
+import { testSuiteList } from '@/api/apitest'
 
 const defaultForm = {
   name: '',
@@ -219,6 +227,7 @@ export default {
     }
     this.getProjectList()
     this.getRemoteUserList()
+    this.getRemoteSuiteList()
   },
   data() {
     return {
@@ -250,9 +259,6 @@ export default {
   },
   methods: {
     getProjectSetting: function(index) {
-      alert(index)
-      const chose_project = this.projectSelect[index]
-      console.log(chose_project)
       this.projectSelect.map(v => {
         if (v.id === index) {
           const apiSttings = v
@@ -285,6 +291,20 @@ export default {
         if (!response.data.results) return
         this.userLIstOptions = response.data.results
       })
+    },
+    getRemoteSuiteList(search) {
+      testSuiteList({ project_id: this.postForm.project_id }).then(response => {
+        if (response.data) {
+          this.testSuiteOptions = response.data.results
+        }
+      })
+      if (search) {
+        testSuiteList({ suite_name: search }).then(response => {
+          if (response.data) {
+            this.testSuiteOptions = response.data.results
+          }
+        })
+      }
     },
     createApiTestCase() {
       if (this.action === 'create') {

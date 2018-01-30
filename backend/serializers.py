@@ -38,16 +38,19 @@ class testSuiteSerializers(serializers.ModelSerializer):
     suite_name = serializers.CharField(max_length=50)
     suite_desc = serializers.CharField(max_length=200)
     project_id = serializers.IntegerField()
+    case_count = serializers.SerializerMethodField(source='')
     suite_log = SuiteChangeLogSerializers(many=True, read_only=True)
 
     class Meta:
         model = TestSuite
-        fields = ('id', 'suite_name', 'suite_desc', 'project_id', 'create_time', 'suite_log')
+        fields = ('id', 'suite_name', 'suite_desc', 'project_id', 'create_time', 'suite_log', 'case_count')
+
+    def get_case_count(self, obj):
+        return ApiTestCases.objects.filter(suite_id=obj.id).count()
 
     def create(self, validated_data):
         suite = TestSuite.objects.create(**validated_data)
         return suite
-
 
 
 class apiTestCaseSerializers(serializers.ModelSerializer):

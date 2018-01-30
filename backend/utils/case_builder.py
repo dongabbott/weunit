@@ -1,29 +1,22 @@
 # -*-coding:utf-8 -*-
 import os
-
-
-class CaseBuilder(object):
-
-    def __init__(self, path, suite_name, func_name):
-        self.path = path
-        self.suite_name = suite_name
-        self.func_name = suite_name
-
-
-
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 
 class_template = """# -*-coding:utf-8 -*-
 import json
 import unittest\n\n
 class {}(unittest.TestCase):
+    {}
+    def setUp(self):
+        pass\n
+    def tearDown(self):
+        pass\n
 """
 
 function_template = """
-    def setUp(self):
-        pass\n
-    def tearDown():
-        pass\n
     def {}(self):
         {}
         self.assertIsNotNone(json.loads(self.result))
@@ -31,19 +24,16 @@ function_template = """
 """
 
 
-class DataTemplate(object):
+class CaseBuilder(object):
 
-    def case_builder(self, case_data, suite_name, suite_dir='./'):
-        """
-        用于生成测试用例文件
-        :param suite_dir: 测试用例文件目录
-        :return:
-        """
-        fun = ''
-        for case_func in case_data.keys():
-            desc = case_data.get(case_func).get("desc")
-            desc = '"""' + '\t' + desc.encode("utf-8") + '"""' if desc is not None else ''
-            fun += function_template.format(case_func, desc)
-        case_file_path = os.path.join(suite_dir, suite_name + '.py')
-        with open(case_file_path, 'wb') as f:
-            f.write(class_template.format(suite_name) + fun)
+    def __init__(self, path):
+        self.path = path
+
+    def suite_build(self, suite_name, suite_desc=None):
+        print suite_desc, type(suite_desc)
+        desc = '"""' + '\t' + suite_desc + '"""' if suite_desc is not None else ''
+        return class_template.format(suite_name, desc)
+
+    def case_build(self, func_name, case_desc=None):
+        desc = '"""' + '\t' + case_desc + '"""' if case_desc is not None else ''
+        return function_template.format(func_name, desc)

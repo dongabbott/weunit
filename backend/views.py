@@ -7,7 +7,8 @@ from rest_framework import status
 from django.http import Http404
 from rest_framework import permissions
 from rest_framework.decorators import permission_classes, authentication_classes
-from .models import ApiTestCases, ApiTokenUser, TestSuite
+from .models import ApiTestCases, ApiTokenUser, TestSuite, SuiteChangeLog
+from project.models import Projects
 from .serializers import apiTokenUserSerializers, apiTestCaseSerializers, testSuiteSerializers
 from rest_framework import generics
 from rest_framework import filters
@@ -15,9 +16,11 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
 from .utils.weclient import WeHttpClient
+from .utils.case_builder import CaseBuilder
 from .utils.options import REQUEST_METHOD
 from project.models import Settings
-from django.db.models import Q
+from project.serializers import ProjectSerializer
+import os
 
 
 class apiTokenUserList(generics.ListAPIView):
@@ -73,13 +76,16 @@ class testSuiteList(generics.ListAPIView):
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
+        project_filter = {}
         queryset = TestSuite.objects.all()
         project_id = self.request.query_params.get('project_id')
         suite_name = self.request.query_params.get('suite_name')
-        if suite_name or project_id:
-            return queryset.filter(Q(project_id=project_id)|Q(suite_name__icontains = suite_name))
-        else:
-            return queryset
+        if project_id and project_id != '':
+            project_filter["project_id"] = project_id
+        elif suite_name and suite_name != '':
+            project_filter["suite_name__icontains"] = suite_name
+        return queryset.filter(**project_filter)
+
 
     def post(self, request, format=None):
         serializer = testSuiteSerializers(data=request.data)
@@ -223,3 +229,45 @@ def refresh(request):
         return Response({'data': data})
     else:
         return Response({'error': u'更新token失败'})
+
+
+@api_view(["GET", "POST"])
+@authentication_classes([TokenAuthentication, SessionAuthentication, ])
+@permission_classes([IsAuthenticated, ])
+def suite_init(request, pk):
+    try:
+        suite = TestSuite.objects.get(id=pk)
+    except TestSuite.DoesNotExist:
+        return Http404
+    cases = ApiTestCases.objects.filter(suite_id=pk).all()
+    project = Projects.objects.get(id=suite.project_id)
+    suite_log = SuiteChangeLog.objects.filter(test_suite_id=pk).last()
+    old_coding = suite_log.code_content if suite_log != None else None
+    if not os.path.exists(project.project_root):
+        os.makedirs(project.project_root)
+    suite_file_path = os.path.join(project.project_root, '{}.py'.format(suite.suite_name))
+    if request.method == "GET":
+        suite_content = CaseBuilder(suite_file_path).suite_build(suite.suite_name, suite.suite_desc)
+        for case in cases:
+            cases_content = CaseBuilder(suite_file_path).case_build(case.func_name, case.description)
+            suite_content += cases_content
+        data = {
+            'suite': testSuiteSerializers(suite).data,
+            'project': ProjectSerializer(suite.project).data,
+            'file_path': suite_file_path,
+            'file_content': suite_content,
+            'last': old_coding
+        }
+        return Response(data)
+    elif request.method == "POST":
+        if request.data.get("active") == "save":
+            coding = request.data.get("coding")
+            log = SuiteChangeLog.objects.create(test_suite_id=suite.id, code_content=coding)
+            log.save()
+            try:
+                with open(suite_file_path, 'wb') as f:
+                    f.write(coding)
+                    f.close()
+            except IOError as e:
+                return Response({"status": "fail"}, status=status.HTTP_204_NO_CONTENT)
+            return Response({"status": "ok"}, status=status.HTTP_204_NO_CONTENT)

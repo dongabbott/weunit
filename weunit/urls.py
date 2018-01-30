@@ -52,4 +52,5 @@ urlpatterns = [
     url(r'^api/apitest/case/(?P<pk>[0-9]+)/$', apitest_view.apiTestCaseDetail.as_view()),
     url(r'^api/apitest/case/debug/$', apitest_view.http_remote),
     url(r'^api/apitest/suite/$', apitest_view.testSuiteList.as_view()),
+    url(r'^api/apitest/suite/(?P<pk>[0-9]+)/ready/$', apitest_view.suite_init),
 ]

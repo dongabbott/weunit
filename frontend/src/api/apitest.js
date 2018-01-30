@@ -146,3 +146,20 @@ export function apiDebug(data) {
     data
   })
 }
+
+// 获取用例代码数据
+export function getCoding(suite_id) {
+  return request({
+    url: '/api/apitest/suite/' + suite_id + '/ready/',
+    method: 'get'
+  })
+}
+
+// 保存代码
+export function saveCoding(suite_id, data) {
+  return request({
+    url: '/api/apitest/suite/' + suite_id + '/ready/',
+    method: 'post',
+    data
+  })
+}

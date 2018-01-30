@@ -1,12 +1,12 @@
 <template>
   <div class="app-container calendar-list-container">
     <div class="filter-container">
-      <el-input @keyup.enter.native="handleFilter" style="width: 200px;" class="filter-item" placeholder="套件名称" v-model="listQuery.suite_name">
-      </el-input>
       <el-select clearable class="filter-item" style="width: 130px" v-model="listQuery.project_id" placeholder="所属项目">
         <el-option v-for="item in projectSelect" :key="item.key" :label="item.name" :value="item.key">
         </el-option>
       </el-select>
+      <el-input @keyup.enter.native="handleFilter" style="width: 200px;" class="filter-item" placeholder="套件名称" v-model="listQuery.suite_name">
+      </el-input>
       <el-button class="filter-item" type="primary" v-waves icon="el-icon-search" @click="handleFilter">搜索</el-button>
       <el-button class="filter-item" style="margin-left: 10px;" @click="handleCreate" type="primary" icon="el-icon-edit">添加</el-button>
       <el-button class="filter-item" type="primary" v-waves icon="el-icon-download" @click="handleDownload">导出</el-button>
@@ -29,6 +29,11 @@
           <span>{{scope.row.suite_desc}}</span>
         </template>
       </el-table-column>
+      <el-table-column width="80px" align="left" label="用例个数">
+        <template slot-scope="scope">
+          <span>{{scope.row.case_count}}</span>
+        </template>
+      </el-table-column>
       <el-table-column class-name="status-col" label="更新时间" width="200">
         <template slot-scope="scope">
           <span>{{scope.row.create_time}}</span>
@@ -38,7 +43,9 @@
         <template slot-scope="scope">
           <el-button type="primary" size="mini" @click="testSuiteUpdate(scope.row)">编辑</el-button>
           </el-button>
-          <el-button type="info" size="mini" @click="">刷新token</el-button>
+          <el-button type="waring" size="mini">生成unit</el-button>
+          </el-button>
+          <el-button type="info" size="mini" @click="editTestUnitCase(scope.row)">编辑unit</el-button>
           </el-button>
           <el-button size="mini" type="danger" @click="deleteTestSuite(scope.row.id)">删除
           </el-button>
@@ -82,19 +89,58 @@
         <el-button v-else type="primary" @click="updateData(temp.id)">确 定</el-button>
       </div>
     </el-dialog>
+
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="codingFormVisible" :model="temp">
+        <codemirror ref="myCm"
+              :value="this.unit_code"
+              :options="cmOptions"
+              @input="onCmCodeChange">
+        </codemirror>
+    <div slot="footer" class="dialog-footer">
+      <el-button @click="codingFormVisible = false">取 消</el-button>
+      <el-button type="primary" @click="SaveCodingFile(temp)">确 定</el-button>
+    </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { testSuiteList, testSuiteAdd, testSuiteDelete } from '@/api/apitest'
+import { testSuiteList, testSuiteAdd, testSuiteDelete, getCoding, saveCoding } from '@/api/apitest'
 import waves from '@/directive/waves' // 水波纹指令
 import { parseTime } from '@/utils'
 import { projectList } from '@/api/project'
+import { codemirror } from 'vue-codemirror'
+import 'codemirror/lib/codemirror.css'
+// language
+import 'codemirror/mode/python/python.js'
+// theme css
+import 'codemirror/theme/base16-light.css'
+// require active-line.js
+import 'codemirror/addon/selection/active-line.js'
+// closebrackets
+import 'codemirror/addon/edit/closebrackets.js'
+// keyMap
+import 'codemirror/mode/clike/clike.js'
+import 'codemirror/addon/edit/matchbrackets.js'
+import 'codemirror/addon/comment/comment.js'
+import 'codemirror/addon/dialog/dialog.js'
+import 'codemirror/addon/dialog/dialog.css'
+import 'codemirror/addon/search/searchcursor.js'
+import 'codemirror/addon/search/search.js'
+import 'codemirror/keymap/emacs.js'
 
 export default {
   name: 'projectTable',
   directives: {
     waves
+  },
+  components: {
+    codemirror
+  },
+  computed: {
+    codemirror() {
+      return this.$refs.myCm.codemirror
+    }
   },
   data() {
     return {
@@ -107,22 +153,33 @@ export default {
         project_id: null,
         suite_name: null
       },
-      sortOptions: [{ label: '按ID升序列', key: '+id' }, { label: '按ID降序', key: '-id' }],
-      statusOptions: ['published', 'draft', 'deleted'],
-      showAuditor: false,
       temp: {
         id: undefined,
         suite_name: '',
         suite_desc: '',
         project_id: null
       },
+      unit_code: '',
       dialogFormVisible: false,
+      codingFormVisible: false,
       dialogStatus: '',
       textMap: {
         update: '编辑',
-        create: '创建'
+        create: '创建',
+        coding: '代码编辑'
       },
       dialogPvVisible: false,
+      cmOptions: {
+        // codemirror options
+        autoCloseBrackets: true,
+        tabSize: 4,
+        styleActiveLine: true,
+        lineNumbers: true,
+        line: true,
+        mode: 'text/x-python',
+        theme: 'base16-light',
+        keyMap: 'emacs'
+      },
       rules: {
         suite_name: [{ required: true, message: '套件名必须填写', trigger: 'blur' }]
       }
@@ -196,6 +253,35 @@ export default {
         this.list.splice(index, 1)
       })
     },
+    SaveCodingFile(row) {
+      const data = {
+        active: 'save',
+        coding: this.unit_code
+      }
+      saveCoding(row.id, data).then(response => {
+        if (response.data) {
+          console.log(response.data)
+        }
+      })
+    },
+    editTestUnitCase(row) {
+      this.temp = Object.assign({}, row)
+      this.dialogStatus = 'coding'
+      this.codingFormVisible = true
+      getCoding(row.id).then(response => {
+        if (response.data.last === null) {
+          this.unit_code = response.data.file_content
+        } else {
+          this.unit_code = response.data.last
+        }
+      })
+    },
+    editTestCaseHandle(row) {
+      this.$router.push({ path: '/apitest/edit/' + row.id })
+    },
+    onCmCodeChange(newCode) {
+      this.unit_code = newCode
+    },
     handleFilter() {
       this.listQuery.page = 1
       this.getList()
@@ -218,7 +304,6 @@ export default {
     },
     handleCreate() {
       this.resetTemp()
-      console.log(this.resetTemp())
       this.dialogStatus = 'create'
       this.dialogFormVisible = true
       this.$nextTick(() => {
